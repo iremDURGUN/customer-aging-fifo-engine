@@ -30,6 +30,7 @@ FROM (
     FROM (
         -- =========================================================================================
         -- BÖLÜM 1: STANDART CARİ HESAPLAR (AccountTypeCode = 3)
+        -- SECTION 1: STANDARD CURRENT ACCOUNTS (AccountTypeCode = 3)
         -- =========================================================================================
         SELECT 
               CustomerCode                  = AccountTransactions.AccountID
@@ -43,6 +44,7 @@ FROM (
             , DaysOverdue                   = DATEDIFF(DAY, @BalanceDate, AccountTransactions.PaymentDueDate)
             
             -- Dinamik Açıklama Oluşturma (İşlem Tipi + Borç Nedeni + Satır Açıklaması)
+            -- Dynamic Description Generation (Process Type + Debit Reason + Line Description)
             , Description                   = ISNULL((SELECT ProcessDefinitions.ProcessDescription FROM InvoiceHeaders WITH(NOLOCK) LEFT OUTER JOIN ProcessDefinitions ON ProcessDefinitions.ProcessCode = InvoiceHeaders.ProcessCode AND ProcessDefinitions.LangCode = 'TR' WHERE InvoiceHeaders.InvoiceHeaderID = AccountTransactions.ApplicationID AND AccountTransactions.ApplicationCode = 'Invoi'), '')
                                               + CASE WHEN AccountTransactions.ApplicationCode <> 'Invoi' OR AccountTransactions.DebitReasonCode = '' THEN '' ELSE ' - ' END 
                                               + ISNULL((SELECT DebitReasonDescription FROM DebitReasonDefinitions WITH(NOLOCK) WHERE DebitReasonDefinitions.DebitReasonCode = AccountTransactions.DebitReasonCode AND DebitReasonDefinitions.LangCode = 'TR'), '')
@@ -53,6 +55,7 @@ FROM (
             , CurrentBalance                = AccountTransactions.CurrentBalance
             
             -- Toplam Bakiye (Genel Defterden Gelen Net Bakiye)
+            -- Total Balance (Net Balance from General Ledger)
             , TotalBalance                  = ISNULL(Balance.AmountDebit, 0) - ISNULL(Balance.AmountCredit, 0)
 
             , PaymentTerm                   = AccountMaster.PaymentTerm
@@ -99,11 +102,13 @@ FROM (
             AND AccountAttributes.AccountID = AccountMaster.AccountID
             
         -- Vade Tablosu Bağlantısı (Fonksiyondan Tabloya Çevrildi)
+        -- Average Payment Days Table Join (Converted from Function to Table)
         LEFT OUTER JOIN AveragePaymentDays AS AvgPaymentDays WITH(NOLOCK)
             ON AccountMaster.AccountTypeCode = AvgPaymentDays.AccountTypeCode
             AND AccountMaster.AccountID = AvgPaymentDays.AccountID
             
         -- Adres Bağlantıları (Fonksiyondan Tabloya Çevrildi)
+        -- Address Joins (Converted from Function to Table)
         LEFT OUTER JOIN AccountDefaults WITH(NOLOCK) 
             ON AccountDefaults.AccountTypeCode = AccountMaster.AccountTypeCode
             AND AccountDefaults.AccountID = AccountMaster.AccountID 
@@ -111,6 +116,7 @@ FROM (
             ON AccountAddresses.AddressLinkID = AccountDefaults.AddressLinkID
 
         -- Satış Temsilcisi Bağlantısı (En son atanan temsilciyi alır)
+        -- Sales Representative Join (Fetches the most recently assigned representative)
         LEFT OUTER JOIN (
             SELECT 
                 AccountTypeCode, 
@@ -126,6 +132,7 @@ FROM (
             AND SalesPersonnel.SortOrder = 1
             
         -- Genel Defter Bakiye Hesaplaması
+        -- General Ledger Balance Calculation
         LEFT OUTER JOIN (
             SELECT CustomerCode, AmountDebit = SUM(AmountDebit), AmountCredit = SUM(AmountCredit)
             FROM (
@@ -150,6 +157,7 @@ FROM (
 
         -- =========================================================================================
         -- BÖLÜM 2: İLİŞKİLİ HESAPLAR / TEDARİKÇİ-MÜŞTERİ ORTAK HESAPLARI
+        -- SECTION 2: RELATED ACCOUNTS / VENDOR-CUSTOMER MUTUAL ACCOUNTS
         -- =========================================================================================
         SELECT 
               CustomerCode                  = AccountRelations.AccountID
@@ -163,6 +171,7 @@ FROM (
             , DaysOverdue                   = DATEDIFF(DAY, @BalanceDate, AccountTransactions.PaymentDueDate)
             
             -- Dinamik Açıklama Oluşturma
+            -- Dynamic Description Generation
             , Description                   = ISNULL((SELECT ProcessDefinitions.ProcessDescription FROM InvoiceHeaders WITH(NOLOCK) LEFT OUTER JOIN ProcessDefinitions ON ProcessDefinitions.ProcessCode = InvoiceHeaders.ProcessCode AND ProcessDefinitions.LangCode = 'TR' WHERE InvoiceHeaders.InvoiceHeaderID = AccountTransactions.ApplicationID AND AccountTransactions.ApplicationCode = 'Invoi'), '')
                                               + CASE WHEN AccountTransactions.ApplicationCode <> 'Invoi' OR AccountTransactions.DebitReasonCode = '' THEN '' ELSE ' - ' END 
                                               + ISNULL((SELECT DebitReasonDescription FROM DebitReasonDefinitions WITH(NOLOCK) WHERE DebitReasonDefinitions.DebitReasonCode = AccountTransactions.DebitReasonCode AND DebitReasonDefinitions.LangCode = 'TR'), '')
@@ -221,11 +230,13 @@ FROM (
             AND AccountAttributes.AccountID = AccountMaster.AccountID
             
         -- Vade Tablosu Bağlantısı (Fonksiyondan Tabloya Çevrildi)
+        -- Average Payment Days Table Join (Converted from Function to Table)
         LEFT OUTER JOIN AveragePaymentDays AS AvgPaymentDays WITH(NOLOCK)
             ON AccountMaster.AccountTypeCode = AvgPaymentDays.AccountTypeCode
             AND AccountMaster.AccountID = AvgPaymentDays.AccountID
             
         -- Adres Bağlantıları (Fonksiyondan Tabloya Çevrildi)
+        -- Address Joins (Converted from Function to Table)
         LEFT OUTER JOIN AccountDefaults WITH(NOLOCK) 
             ON AccountDefaults.AccountTypeCode = AccountMaster.AccountTypeCode
             AND AccountDefaults.AccountID = AccountMaster.AccountID 
@@ -233,6 +244,7 @@ FROM (
             ON AccountAddresses.AddressLinkID = AccountDefaults.AddressLinkID
 
         -- Satış Temsilcisi Bağlantısı (En son atanan temsilciyi alır)
+        -- Sales Representative Join (Fetches the most recently assigned representative)
         LEFT OUTER JOIN (
             SELECT 
                 AccountTypeCode, 
@@ -248,6 +260,7 @@ FROM (
             AND SalesPersonnel.SortOrder = 1
             
         -- Genel Defter Bakiye Hesaplaması
+        -- General Ledger Balance Calculation
         LEFT OUTER JOIN (
             SELECT CustomerCode, AmountDebit = SUM(AmountDebit), AmountCredit = SUM(AmountCredit)
             FROM (
