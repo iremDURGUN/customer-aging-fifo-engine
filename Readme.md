@@ -113,12 +113,71 @@ Bu proje, modüler bir kurumsal analitik veritabanında çalışacak şekilde ta
 
 [EN] 
 
-Alternatively, you can create the empty database structure directly (without synthetic data) by running the [create_entrprise_analytics_database.sql]() file included in this repository.
+Alternatively, you can create the empty database structure directly (without synthetic data) by running the [create_entrprise_analytics_database.sql](https://github.com/iremDURGUN/customer-aging-fifo-engine/blob/main/create_enterprise-analytics_database.sql) file included in this repository.
 
 [TR] 
 
-Alternatif olarak, veri girişi olmadan sadece veritabanı şemasını (boş tabloları) doğrudan SQL'de oluşturmak için bu projede bulunan `create_database_schema.sql` dosyasını çalıştırabilirsiniz.
+Alternatif olarak, veri girişi olmadan sadece veritabanı şemasını (boş tabloları) doğrudan SQL'de oluşturmak için bu projede bulunan [create_entrprise_analytics_database.sql](https://github.com/iremDURGUN/customer-aging-fifo-engine/blob/main/create_enterprise-analytics_database.sql) dosyasını çalıştırabilirsiniz.
 
+ ```mermaid
+erDiagram
+    %% Core Entities
+    AccountMaster {
+        int AccountTypeCode PK
+        string AccountID PK
+        int PaymentTerm
+        string SalesChannelCode
+    }
+    
+    AccountTransactions {
+        int TransactionID PK
+        string AccountID FK
+        date TransactionDate
+        string ReferenceNumber
+        decimal CurrentBalance
+        int ApplicationID FK
+    }
+    
+    GeneralLedger {
+        int LedgerID PK
+        string AccountID FK
+        decimal AmountDebit
+        decimal AmountCredit
+    }
+    
+    %% Relational & Detail Entities
+    AccountRelations {
+        string VendorCode FK
+        string AccountID FK
+    }
+
+    SalespersonAssignments {
+        string AccountID FK
+        string RepresentativeID FK
+    }
+
+    SalesPersonnel {
+        string RepresentativeID PK
+        string FullName
+    }
+
+    InvoiceHeaders {
+        int InvoiceHeaderID PK
+        string ProcessCode
+    }
+
+    %% Relationships
+    AccountMaster ||--o{ AccountTransactions : "has transactions"
+    AccountMaster ||--o{ GeneralLedger : "ledger balance"
+    AccountMaster ||--o{ AccountRelations : "linked (Vendor/Customer)"
+    AccountMaster ||--o{ SalespersonAssignments : "assigned to"
+    AccountMaster ||--|| AccountDefaults : "has defaults"
+    AccountMaster ||--|| AccountAttributes : "has attributes"
+    AccountMaster ||--o{ AccountDescriptions : "described in"
+    
+    SalespersonAssignments }o--|| SalesPersonnel : "rep details"
+    AccountTransactions }o--|| InvoiceHeaders : "invoiced via"
+```
 ## This ensures: / Bu yapı şunları sağlar:
 
 * No real company data is used / Gerçek şirket verisi kullanılmamasını
