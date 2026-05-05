@@ -108,6 +108,17 @@ Bu proje, modüler bir kurumsal analitik veritabanında çalışacak şekilde ta
 
 👉 [synthetic-data-generator project](https://github.com/iremDURGUN/Synthetic-Data-Generator)
 
+
+---
+
+[EN] 
+
+Alternatively, you can create the empty database structure directly (without synthetic data) by running the [create_entrprise_analytics_database.sql]() file included in this repository.
+
+[TR] 
+
+Alternatif olarak, veri girişi olmadan sadece veritabanı şemasını (boş tabloları) doğrudan SQL'de oluşturmak için bu projede bulunan `create_database_schema.sql` dosyasını çalıştırabilirsiniz.
+
 ## This ensures: / Bu yapı şunları sağlar:
 
 * No real company data is used / Gerçek şirket verisi kullanılmamasını
