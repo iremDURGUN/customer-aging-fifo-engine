@@ -1,130 +1,172 @@
-FIFO Receivables Aging (FIFO Yöntemiyle Alacak Yaşlandırma)
-Overview / Genel Bakış
-[EN] This project implements a FIFO-based accounts receivable aging analysis using SQL Server. It calculates open balances for customer/vendor accounts and accurately determines the remaining amounts of partially paid invoices. This project demonstrates real-world financial data modeling and invoice matching logic typically used in ERP systems.
+# FIFO Receivables Aging (FIFO Yöntemiyle Alacak Yaşlandırma)
 
-[TR] Bu proje, SQL Server kullanarak FIFO tabanlı bir alacak yaşlandırma analizi uygular. Müşteri/satıcı hesapları için açık bakiyeleri hesaplar ve kısmen ödenmiş faturaların kalan tutarlarını doğru bir şekilde belirler. Bu proje, ERP sistemlerinde tipik olarak kullanılan gerçek dünya finansal veri modelleme ve fatura eşleştirme mantığını gösterir.
+## Overview / Genel Bakış
 
-Problem / Problem
-[EN] In financial systems, payments are not always matched directly to specific invoices. As a result:
-[TR] Finansal sistemlerde ödemeler her zaman belirli faturalarla doğrudan eşleştirilmez. Bunun sonucunda:
+[EN]
 
-Some invoices are partially paid / Bazı faturalar kısmen ödenir
+This project implements a FIFO-based accounts receivable aging analysis using SQL Server. It calculates open balances for customer/vendor accounts and accurately determines the remaining amounts of partially paid invoices. This project demonstrates real-world financial data modeling and invoice matching logic typically used in ERP systems.
 
-Some remain fully open / Bazıları tamamen açık kalır
+[TR]
 
-Accurate aging requires correct allocation logic / Doğru yaşlandırma raporları, doğru bir dağıtım mantığı gerektirir
+Bu proje, SQL Server kullanarak FIFO tabanlı bir alacak yaşlandırma analizi uygular. Müşteri/satıcı hesapları için açık bakiyeleri hesaplar ve kısmen ödenmiş faturaların kalan tutarlarını doğru bir şekilde belirler. Bu proje, ERP sistemlerinde tipik olarak kullanılan gerçek dünya finansal veri modelleme ve fatura eşleştirme mantığını gösterir.
 
-[EN] Traditional reporting methods often fail to correctly identify which invoices remain open.
-[TR] Geleneksel raporlama yöntemleri genellikle hangi faturaların açık kaldığını doğru bir şekilde tespit etmekte başarısız olur.
+## Problem / Problem
 
-Solution / Çözüm
-[EN] This project uses SQL window functions to:
-[TR] Bu proje, aşağıdakileri gerçekleştirmek için SQL pencere (window) fonksiyonlarını kullanır:
+[EN] 
 
-Calculate running balances per account / Hesap bazında kümülatif bakiyeleri hesaplamak
+In financial systems, payments are not always matched directly to specific invoices. As a result:
 
-Apply FIFO (First In, First Out) logic / FIFO (İlk Giren İlk Çıkar) mantığını uygulamak
+[TR] 
 
-Identify partially closed invoices / Kısmen kapanmış faturaları tespit etmek
+Fnansal sistemlerde ödemeler her zaman belirli faturalarla doğrudan eşleştirilmez. Bunun sonucunda:
 
-Extract only the invoices contributing to the current outstanding balance / Sadece mevcut açık bakiyeye katkıda bulunan faturaları filtrelemek
+* Some invoices are partially paid / Bazı faturalar kısmen ödenir
 
-Key Concepts / Temel Kavramlar
-FIFO (First In, First Out) / FIFO (İlk Giren İlk Çıkar)
+* Some remain fully open / Bazıları tamamen açık kalır
 
-Running Balance Calculation / Kümülatif Bakiye Hesaplama
+* Accurate aging requires correct allocation logic / Doğru yaşlandırma raporları, doğru bir dağıtım mantığı gerektirir
 
-Window Functions (SUM OVER PARTITION) / Pencere Fonksiyonları
+[EN]
 
-Partial Invoice Matching Logic / Kısmi Fatura Eşleştirme Mantığı
+Traditional reporting methods often fail to correctly identify which invoices remain open.
 
-Features / Özellikler
-Accurate receivables aging calculation / Doğru alacak yaşlandırma hesaplaması
+[TR] 
 
-Partial invoice closure detection / Kısmi fatura kapama tespiti
+Geleneksel raporlama yöntemleri genellikle hangi faturaların açık kaldığını doğru bir şekilde tespit etmekte başarısız olur.
 
-Multi-account support (customer & vendor relationships) / Çoklu hesap desteği (müşteri & satıcı ilişkileri)
+## Solution / Çözüm
 
-Dynamic balance calculation based on reporting date / Raporlama tarihine göre dinamik bakiye hesaplama
+[EN] 
 
-Financially consistent output aligned with general ledger totals / Genel defter toplamlarıyla uyumlu, finansal açıdan tutarlı çıktı
+This project uses SQL window functions to:
 
-Tech Stack / Teknolojiler
-SQL Server
+[TR] 
 
-T-SQL (Window Functions, CTE-like nested queries / Pencere fonksiyonları ve iç içe sorgular)
+Bu proje, aşağıdakileri gerçekleştirmek için SQL pencere (window) fonksiyonlarını kullanır:
 
-Query Logic (High-Level) / Sorgu Mantığı (Genel Bakış)
-Retrieve account transactions / Hesap hareketlerini getir
+* Calculate running balances per account / Hesap bazında kümülatif bakiyeleri hesaplamak
 
-Calculate total balance from general ledger / Genel defterden toplam bakiyeyi hesapla
+* Apply FIFO (First In, First Out) logic / FIFO (İlk Giren İlk Çıkar) mantığını uygulamak
 
-Compute running balance (newest → oldest) / Kümülatif bakiyeyi hesapla (en yeniden → en eskiye)
+* Identify partially closed invoices / Kısmen kapanmış faturaları tespit etmek
 
-Apply FIFO logic to determine: / Aşağıdakileri belirlemek için FIFO mantığını uygula:
+* Extract only the invoices contributing to the current outstanding balance / Sadece mevcut açık bakiyeye katkıda bulunan faturaları filtrelemek
 
-Fully open invoices / Tamamen açık faturalar
+## Key Concepts / Temel Kavramlar
 
-Partially paid invoices / Kısmen ödenmiş faturalar
+* FIFO (First In, First Out) / FIFO (İlk Giren İlk Çıkar)
 
-Filter only relevant records contributing to the open balance / Sadece açık bakiyeye neden olan ilgili kayıtları filtrele
+* Running Balance Calculation / Kümülatif Bakiye Hesaplama
 
-Database & Data Source / Veritabanı ve Veri Kaynağı
-[EN] This project is designed to work on a modular enterprise analytics database. The database schema and synthetic data used in this project can be generated using:
-[TR] Bu proje, modüler bir kurumsal analitik veritabanında çalışacak şekilde tasarlanmıştır. Bu projede kullanılan veritabanı şeması ve sentetik veriler şu proje kullanılarak oluşturulabilir:
+* Window Functions (SUM OVER PARTITION) / Pencere Fonksiyonları
 
-👉 synthetic-data-generator project
+* Partial Invoice Matching Logic / Kısmi Fatura Eşleştirme Mantığı
 
-[EN] This ensures: / [TR] Bu yapı şunları sağlar:
+## Features / Özellikler
 
-No real company data is used / Gerçek şirket verisi kullanılmamasını
+* Accurate receivables aging calculation / Doğru alacak yaşlandırma hesaplaması
 
-Fully reproducible environment / Tamamen tekrarlanabilir bir çalışma ortamını
+* Partial invoice closure detection / Kısmi fatura kapama tespiti
 
-Consistent testing scenarios / Tutarlı test senaryolarını
+* Multi-account support (customer & vendor relationships) / Çoklu hesap desteği (müşteri & satıcı ilişkileri)
 
-How to Use / Nasıl Kullanılır?
-Set reporting date / Raporlama tarihini belirleyin:
+* Dynamic balance calculation based on reporting date / Raporlama tarihine göre dinamik bakiye hesaplama
+
+* Financially consistent output aligned with general ledger totals / Genel defter toplamlarıyla uyumlu, finansal açıdan tutarlı çıktı
+
+## Tech Stack / Teknolojiler
+
+* SQL Server
+
+* T-SQL (Window Functions, CTE-like nested queries / Pencere fonksiyonları ve iç içe sorgular)
+
+## Query Logic (High-Level) / Sorgu Mantığı (Genel Bakış)
+
+* Retrieve account transactions / Hesap hareketlerini getir
+
+* Calculate total balance from general ledger / Genel defterden toplam bakiyeyi hesapla
+
+* Compute running balance (newest → oldest) / Kümülatif bakiyeyi hesapla (en yeniden → en eskiye)
+
+* Apply FIFO logic to determine: / Aşağıdakileri belirlemek için FIFO mantığını uygula:
+
+* Fully open invoices / Tamamen açık faturalar
+
+* Partially paid invoices / Kısmen ödenmiş faturalar
+
+* Filter only relevant records contributing to the open balance / Sadece açık bakiyeye neden olan ilgili kayıtları filtrele
+
+## Database & Data Source / Veritabanı ve Veri Kaynağı
+
+[EN] 
+
+This project is designed to work on a modular enterprise analytics database. The database schema and synthetic data used in this project can be generated using:
+
+[TR] 
+
+Bu proje, modüler bir kurumsal analitik veritabanında çalışacak şekilde tasarlanmıştır. Bu projede kullanılan veritabanı şeması ve sentetik veriler şu proje kullanılarak oluşturulabilir:
+
+👉 [synthetic-data-generator project](https://github.com/iremDURGUN/Synthetic-Data-Generator)
+
+## This ensures: / Bu yapı şunları sağlar:
+
+* No real company data is used / Gerçek şirket verisi kullanılmamasını
+
+* Fully reproducible environment / Tamamen tekrarlanabilir bir çalışma ortamını
+
+* Consistent testing scenarios / Tutarlı test senaryolarını
+
+## How to Use / Nasıl Kullanılır?
+
+### Set reporting date / Raporlama tarihini belirleyin:
 
 SQL
-DECLARE @BalanceDate DATE = 'YYYYMMDD';
-Run the query / Sorguyu çalıştırın.
+'DECLARE @BalanceDate DATE = 'YYYYMMDD';'
 
-[EN] Output will include: / [TR] Çıktı şunları içerecektir:
+### Run the query / Sorguyu çalıştırın.
 
-Open invoices / Açık faturalar
+## Output will include: / Çıktı şunları içerecektir:
 
-Remaining balances / Kalan bakiyeler
+* Open invoices / Açık faturalar
 
-Aging-related fields / Yaşlandırma ile ilgili alanlar
+* Remaining balances / Kalan bakiyeler
 
-Output Description / Çıktı Açıklamaları
-CurrentBalance → Invoice amount / Fatura tutarı
+* Aging-related fields / Yaşlandırma ile ilgili alanlar
 
-RunningBalance → Cumulative balance per account / Hesap bazında kümülatif bakiye
+## Output Description / Çıktı Açıklamaları
 
-TotalBalance → Net account balance / Net hesap bakiyesi
+* CurrentBalance → Invoice amount / Fatura tutarı
 
-RemainingInvoiceBalance → Actual open amount per invoice / Fatura başına kalan fiili açık tutar
+* RunningBalance → Cumulative balance per account / Hesap bazında kümülatif bakiye
 
-Use Cases / Kullanım Senaryoları
-Accounts receivable aging reports / Alacak yaşlandırma raporları
+* TotalBalance → Net account balance / Net hesap bakiyesi
 
-Financial reconciliation / Finansal mutabakat
+* RemainingInvoiceBalance → Actual open amount per invoice / Fatura başına kalan fiili açık tutar
 
-ERP system analysis / ERP sistem analizleri
+## Use Cases / Kullanım Senaryoları
 
-Audit support / Denetim süreçlerine destek
+* Accounts receivable aging reports / Alacak yaşlandırma raporları
 
-Credit risk evaluation / Kredi riski değerlendirmesi
+* Financial reconciliation / Finansal mutabakat
 
-Notes / Notlar
-This implementation focuses on financial accuracy rather than simple aggregation. / Bu uygulama, basit bir veri toplamasından ziyade finansal doğruluğa odaklanır.
+* ERP system analysis / ERP sistem analizleri
 
-Designed to simulate real ERP accounting scenarios. / Gerçek ERP muhasebe senaryolarını simüle etmek için tasarlanmıştır.
+* Audit support / Denetim süreçlerine destek
 
-Works best with transactional-level data. / En iyi işlem (hareket) düzeyindeki verilerle çalışır.
+* Credit risk evaluation / Kredi riski değerlendirmesi
 
-Disclaimer / Yasal Uyarı
-[EN] All data used in this project can be generated synthetically. No real financial data is included.
-[TR] Bu projede kullanılan tüm veriler sentetik olarak üretilebilir. Gerçek hiçbir finansal veri içermemektedir.
+## Notes / Notlar
+
+* This implementation focuses on financial accuracy rather than simple aggregation. / Bu uygulama, basit bir veri toplamasından ziyade finansal doğruluğa odaklanır.
+
+* Designed to simulate real ERP accounting scenarios. / Gerçek ERP muhasebe senaryolarını simüle etmek için tasarlanmıştır.
+
+* Works best with transactional-level data. / En iyi işlem (hareket) düzeyindeki verilerle çalışır.
+
+## Disclaimer / Yasal Uyarı
+
+[EN]
+All data used in this project can be generated synthetically. No real financial data is included.
+
+[TR] 
+Bu projede kullanılan tüm veriler sentetik olarak üretilebilir. Gerçek hiçbir finansal veri içermemektedir.
