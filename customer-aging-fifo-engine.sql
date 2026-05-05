@@ -12,7 +12,7 @@ DECLARE @BalanceDate DATE = '20260101';
 
 SELECT 
     *,
-    -- Kýsmi kapanan faturanýn sadece açýkta kalan tutarýný hesaplar
+    -- KÄ±smi kapanan faturanÄ±n sadece aÃ§Ä±kta kalan tutarÄ±nÄ± hesaplar
     -- Calculates the remaining open amount for partially closed invoices
     RemainingInvoiceBalance = CASE 
                                 WHEN RunningBalance <= TotalBalance THEN CurrentBalance 
@@ -21,7 +21,7 @@ SELECT
 FROM (
     SELECT 
         *,
-        -- Müþteri/Hesap bazýnda, en yeni faturadan eskiye doðru kümülatif bakiye toplamý hesaplanýr
+        -- MÃ¼ÅŸteri/Hesap bazÄ±nda, en yeni faturadan eskiye doÄŸru kÃ¼mÃ¼latif bakiye toplamÄ± hesaplanÄ±r
         -- Calculates running balance partitioned by account, ordered from newest to oldest document
         RunningBalance = SUM(CurrentBalance) OVER (
             PARTITION BY CustomerCode 
@@ -29,7 +29,7 @@ FROM (
         )
     FROM (
         -- =========================================================================================
-        -- BÖLÜM 1: STANDART CARÝ HESAPLAR (AccountTypeCode = 3)
+        -- BÃ–LÃœM 1: STANDART CARÄ° HESAPLAR (AccountTypeCode = 3)
         -- =========================================================================================
         SELECT 
               CustomerCode                  = AccountTransactions.AccountID
@@ -42,7 +42,7 @@ FROM (
             , PaymentDueDate                = AccountTransactions.PaymentDueDate
             , DaysOverdue                   = DATEDIFF(DAY, @BalanceDate, AccountTransactions.PaymentDueDate)
             
-            -- Dinamik Açýklama Oluþturma (Ýþlem Tipi + Borç Nedeni + Satýr Açýklamasý)
+            -- Dinamik AÃ§Ä±klama OluÅŸturma (Ä°ÅŸlem Tipi + BorÃ§ Nedeni + SatÄ±r AÃ§Ä±klamasÄ±)
             , Description                   = ISNULL((SELECT ProcessDefinitions.ProcessDescription FROM InvoiceHeaders WITH(NOLOCK) LEFT OUTER JOIN ProcessDefinitions ON ProcessDefinitions.ProcessCode = InvoiceHeaders.ProcessCode AND ProcessDefinitions.LangCode = 'TR' WHERE InvoiceHeaders.InvoiceHeaderID = AccountTransactions.ApplicationID AND AccountTransactions.ApplicationCode = 'Invoi'), '')
                                               + CASE WHEN AccountTransactions.ApplicationCode <> 'Invoi' OR AccountTransactions.DebitReasonCode = '' THEN '' ELSE ' - ' END 
                                               + ISNULL((SELECT DebitReasonDescription FROM DebitReasonDefinitions WITH(NOLOCK) WHERE DebitReasonDefinitions.DebitReasonCode = AccountTransactions.DebitReasonCode AND DebitReasonDefinitions.LangCode = 'TR'), '')
@@ -94,25 +94,23 @@ FROM (
         INNER JOIN AccountMaster WITH(NOLOCK) 
             ON AccountMaster.AccountTypeCode = 3 
             AND AccountTransactions.AccountID = AccountMaster.AccountID
-        LEFT OUTER JOIN AccountAttributes 
+        LEFT OUTER JOIN AccountAttributes WITH(NOLOCK)
             ON AccountAttributes.AccountTypeCode = AccountMaster.AccountTypeCode 
             AND AccountAttributes.AccountID = AccountMaster.AccountID
             
-        -- Vade Fonksiyonu Baðlantýsý
-        LEFT OUTER JOIN (SELECT DISTINCT * FROM GetAveragePaymentDays(@BalanceDate)) AS AvgPaymentDays
+        -- Vade Tablosu BaÄŸlantÄ±sÄ± (Fonksiyondan Tabloya Ã‡evrildi)
+        LEFT OUTER JOIN AveragePaymentDays AS AvgPaymentDays WITH(NOLOCK)
             ON AccountMaster.AccountTypeCode = AvgPaymentDays.AccountTypeCode
             AND AccountMaster.AccountID = AvgPaymentDays.AccountID
-            AND AvgPaymentDays.AccountTypeCode = 3
             
-        -- Adres Baðlantýlarý
+        -- Adres BaÄŸlantÄ±larÄ± (Fonksiyondan Tabloya Ã‡evrildi)
         LEFT OUTER JOIN AccountDefaults WITH(NOLOCK) 
             ON AccountDefaults.AccountTypeCode = AccountMaster.AccountTypeCode
             AND AccountDefaults.AccountID = AccountMaster.AccountID 
-            AND AccountDefaults.AccountTypeCode = 3
-        LEFT OUTER JOIN GetAccountAddresses('TR') AS AccountAddresses
+        LEFT OUTER JOIN AccountAddresses WITH(NOLOCK)
             ON AccountAddresses.AddressLinkID = AccountDefaults.AddressLinkID
 
-        -- Satýþ Temsilcisi Baðlantýsý (En son atanan temsilciyi alýr)
+        -- SatÄ±ÅŸ Temsilcisi BaÄŸlantÄ±sÄ± (En son atanan temsilciyi alÄ±r)
         LEFT OUTER JOIN (
             SELECT 
                 AccountTypeCode, 
@@ -127,7 +125,7 @@ FROM (
             AND SalesPersonnel.AccountID = AccountMaster.AccountID
             AND SalesPersonnel.SortOrder = 1
             
-        -- Genel Defter Bakiye Hesaplamasý
+        -- Genel Defter Bakiye HesaplamasÄ±
         LEFT OUTER JOIN (
             SELECT CustomerCode, AmountDebit = SUM(AmountDebit), AmountCredit = SUM(AmountCredit)
             FROM (
@@ -151,7 +149,7 @@ FROM (
         UNION ALL
 
         -- =========================================================================================
-        -- BÖLÜM 2: ÝLÝÞKÝLÝ HESAPLAR / TEDARÝKÇÝ-MÜÞTERÝ ORTAK HESAPLARI
+        -- BÃ–LÃœM 2: Ä°LÄ°ÅžKÄ°LÄ° HESAPLAR / TEDARÄ°KÃ‡Ä°-MÃœÅžTERÄ° ORTAK HESAPLARI
         -- =========================================================================================
         SELECT 
               CustomerCode                  = AccountRelations.AccountID
@@ -164,7 +162,7 @@ FROM (
             , PaymentDueDate                = AccountTransactions.PaymentDueDate
             , DaysOverdue                   = DATEDIFF(DAY, @BalanceDate, AccountTransactions.PaymentDueDate)
             
-            -- Dinamik Açýklama Oluþturma
+            -- Dinamik AÃ§Ä±klama OluÅŸturma
             , Description                   = ISNULL((SELECT ProcessDefinitions.ProcessDescription FROM InvoiceHeaders WITH(NOLOCK) LEFT OUTER JOIN ProcessDefinitions ON ProcessDefinitions.ProcessCode = InvoiceHeaders.ProcessCode AND ProcessDefinitions.LangCode = 'TR' WHERE InvoiceHeaders.InvoiceHeaderID = AccountTransactions.ApplicationID AND AccountTransactions.ApplicationCode = 'Invoi'), '')
                                               + CASE WHEN AccountTransactions.ApplicationCode <> 'Invoi' OR AccountTransactions.DebitReasonCode = '' THEN '' ELSE ' - ' END 
                                               + ISNULL((SELECT DebitReasonDescription FROM DebitReasonDefinitions WITH(NOLOCK) WHERE DebitReasonDefinitions.DebitReasonCode = AccountTransactions.DebitReasonCode AND DebitReasonDefinitions.LangCode = 'TR'), '')
@@ -218,23 +216,23 @@ FROM (
             ON AccountMaster.AccountTypeCode = 1 
             AND AccountMaster.AccountID = AccountRelations.VendorCode
             
-        LEFT OUTER JOIN AccountAttributes 
+        LEFT OUTER JOIN AccountAttributes WITH(NOLOCK)
             ON AccountAttributes.AccountTypeCode = AccountMaster.AccountTypeCode 
             AND AccountAttributes.AccountID = AccountMaster.AccountID
             
-        LEFT OUTER JOIN (SELECT DISTINCT * FROM GetAveragePaymentDays(@BalanceDate)) AS AvgPaymentDays
+        -- Vade Tablosu BaÄŸlantÄ±sÄ± (Fonksiyondan Tabloya Ã‡evrildi)
+        LEFT OUTER JOIN AveragePaymentDays AS AvgPaymentDays WITH(NOLOCK)
             ON AccountMaster.AccountTypeCode = AvgPaymentDays.AccountTypeCode
             AND AccountMaster.AccountID = AvgPaymentDays.AccountID
-            AND AvgPaymentDays.AccountTypeCode = 3
             
+        -- Adres BaÄŸlantÄ±larÄ± (Fonksiyondan Tabloya Ã‡evrildi)
         LEFT OUTER JOIN AccountDefaults WITH(NOLOCK) 
             ON AccountDefaults.AccountTypeCode = AccountMaster.AccountTypeCode
             AND AccountDefaults.AccountID = AccountMaster.AccountID 
-            AND AccountDefaults.AccountTypeCode = 3
-            
-        LEFT OUTER JOIN GetAccountAddresses('TR') AS AccountAddresses
+        LEFT OUTER JOIN AccountAddresses WITH(NOLOCK)
             ON AccountAddresses.AddressLinkID = AccountDefaults.AddressLinkID
 
+        -- SatÄ±ÅŸ Temsilcisi BaÄŸlantÄ±sÄ± (En son atanan temsilciyi alÄ±r)
         LEFT OUTER JOIN (
             SELECT 
                 AccountTypeCode, 
@@ -249,6 +247,7 @@ FROM (
             AND SalesPersonnel.AccountID = AccountMaster.AccountID
             AND SalesPersonnel.SortOrder = 1
             
+        -- Genel Defter Bakiye HesaplamasÄ±
         LEFT OUTER JOIN (
             SELECT CustomerCode, AmountDebit = SUM(AmountDebit), AmountCredit = SUM(AmountCredit)
             FROM (
@@ -271,5 +270,5 @@ FROM (
     ) AS BaseQuery
 ) AS FinalReport
 
--- Açýkta kalan bakiye kontrolü / Open balance condition
+-- AÃ§Ä±kta kalan bakiye kontrolÃ¼ / Open balance condition
 WHERE (RunningBalance - CurrentBalance) < TotalBalance;
