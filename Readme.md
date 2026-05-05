@@ -119,41 +119,148 @@ Alternatively, you can create the empty database structure directly (without syn
 
 Alternatif olarak, veri girişi olmadan sadece veritabanı şemasını (boş tabloları) doğrudan SQL'de oluşturmak için bu projede bulunan [create_entrprise_analytics_database.sql](https://github.com/iremDURGUN/customer-aging-fifo-engine/blob/main/create_enterprise-analytics_database.sql) dosyasını çalıştırabilirsiniz.
 
+### Database Schema;
+
  ```mermaid
 erDiagram
-    %% Core Entities
+    %% ==========================================
+    %% 1. CORE ACCOUNT ENTITIES
+    %% ==========================================
     AccountMaster {
         int AccountTypeCode PK
         string AccountID PK
         int PaymentTerm
         string SalesChannelCode
+        int CustomerTypeCode FK
     }
     
-    AccountTransactions {
-        int TransactionID PK
-        string AccountID FK
-        date TransactionDate
-        string ReferenceNumber
-        decimal CurrentBalance
-        int ApplicationID FK
+    AccountAttributes {
+        int AccountTypeCode PK
+        string AccountID PK
+        string Attribute01
+        string Attribute02
+        string Attribute03
+        string Attribute04
+        string Attribute05
     }
-    
-    GeneralLedger {
-        int LedgerID PK
-        string AccountID FK
-        decimal AmountDebit
-        decimal AmountCredit
+
+    AccountDescriptions {
+        int AccountTypeCode PK
+        string AccountID PK
+        string LangCode PK
+        string AccountName
     }
-    
-    %% Relational & Detail Entities
+
+    AccountDefaults {
+        int AccountTypeCode PK
+        string AccountID PK
+        int AddressLinkID FK
+    }
+
     AccountRelations {
+        int VendorTypeCode
         string VendorCode FK
         string AccountID FK
     }
 
+    %% ==========================================
+    %% 2. TRANSACTION & LEDGER ENTITIES
+    %% ==========================================
+    AccountTransactions {
+        int TransactionID PK
+        int AccountTypeCode
+        string AccountID FK
+        string CompanyCode
+        string OfficeCode
+        date TransactionDate
+        string ReferenceNumber
+        string RefNumber
+        date PaymentDueDate
+        int ApplicationID FK
+        string ApplicationCode FK
+        string DebitReasonCode FK
+        string LineDescription
+        decimal AmountDebit
+        decimal AmountCredit
+        decimal CurrentBalance
+    }
+    
+    GeneralLedger {
+        int LedgerID PK
+        int AccountTypeCode
+        string AccountID FK
+        decimal AmountDebit
+        decimal AmountCredit
+    }
+
+    InvoiceHeaders {
+        int InvoiceHeaderID PK
+        string ProcessCode FK
+        date InvoiceDate
+        string ProcessDescription
+    }
+
+    Payments {
+        int PaymentID PK
+        string AccountID FK
+        date PaymentDate
+        decimal Amount
+    }
+
+    %% ==========================================
+    %% 3. LOOKUP & DEFINITION ENTITIES (DICTIONARY)
+    %% ==========================================
+    ProcessDefinitions {
+        string ProcessCode PK
+        string LangCode PK
+        string ProcessDescription
+    }
+
+    DebitReasonDefinitions {
+        string DebitReasonCode PK
+        string LangCode PK
+        string DebitReasonDescription
+    }
+
+    SourceDefinitions {
+        string ApplicationCode PK
+        string LangCode PK
+        string ApplicationDescription
+    }
+
+    CustomerTypeDefinitions {
+        int CustomerTypeCode PK
+        string LangCode PK
+        string CustomerTypeDescription
+    }
+
+    %% ==========================================
+    %% 4. ADDRESS & HR ENTITIES
+    %% ==========================================
+    AccountAddresses {
+        int AddressLinkID PK
+        string AddressTypeCode
+        string AddressTypeDescription
+        string Address
+        string ZipCode
+        string DistrictCode
+        string DistrictDescription
+        string CityCode
+        string CityDescription
+        string StateCode
+        string StateDescription
+        string CountryCode
+        string CountryDescription
+        string TaxOfficeCode
+        string TaxOfficeDescription
+        string TaxNumber
+    }
+
     SalespersonAssignments {
+        int AccountTypeCode
         string AccountID FK
         string RepresentativeID FK
+        date StartDate
     }
 
     SalesPersonnel {
@@ -161,12 +268,16 @@ erDiagram
         string FullName
     }
 
-    InvoiceHeaders {
-        int InvoiceHeaderID PK
-        string ProcessCode
+    AveragePaymentDays {
+        int AccountTypeCode PK
+        string AccountID PK
+        int AverageDay_Debit
+        date AverageDueDate_Debit
     }
 
-    %% Relationships
+    %% ==========================================
+    %% RELATIONSHIPS
+    %% ==========================================
     AccountMaster ||--o{ AccountTransactions : "has transactions"
     AccountMaster ||--o{ GeneralLedger : "ledger balance"
     AccountMaster ||--o{ AccountRelations : "linked (Vendor/Customer)"
@@ -174,10 +285,21 @@ erDiagram
     AccountMaster ||--|| AccountDefaults : "has defaults"
     AccountMaster ||--|| AccountAttributes : "has attributes"
     AccountMaster ||--o{ AccountDescriptions : "described in"
+    AccountMaster ||--|| AveragePaymentDays : "payment metrics"
+    AccountMaster ||--o{ Payments : "receives"
     
+    AccountDefaults }o--|| AccountAddresses : "address details"
     SalespersonAssignments }o--|| SalesPersonnel : "rep details"
     AccountTransactions }o--|| InvoiceHeaders : "invoiced via"
+    
+    %% Lookup Linking
+    AccountMaster }o--|| CustomerTypeDefinitions : "categorized by"
+    AccountTransactions }o--|| SourceDefinitions : "source app"
+    AccountTransactions }o--|| DebitReasonDefinitions : "reason"
+    InvoiceHeaders }o--|| ProcessDefinitions : "process type"
 ```
+
+
 ## This ensures: / Bu yapı şunları sağlar:
 
 * No real company data is used / Gerçek şirket verisi kullanılmamasını
